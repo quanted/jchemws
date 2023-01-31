@@ -5,10 +5,8 @@ RUN useradd --create-home --shell /bin/bash tomcat && \
 	chown -R tomcat:tomcat /usr/local/tomcat
 
 ENV APP_USER tomcat
-# ENV LD_BIND_NOW=1
 
-# RUN addgroup $APP_USER && \
-# 	adduser -S $APP_USER -G $APP_USER
+COPY jchem/webapps /usr/local/tomcat/
 
 # Makes license folder for chemaxon, gives user read/write privilege
 RUN mkdir -p /home/tomcat/.chemaxon/licenses && \
@@ -19,7 +17,6 @@ RUN chown -R tomcat:tomcat /home/tomcat/.chemaxon /usr/local/tomcat
 
 # Sets work directory to "tomcat" folder
 WORKDIR /home/tomcat
-# WORKDIR /opt/tomcat/bin
 
 # Sets default user as "tomcat"
 USER tomcat

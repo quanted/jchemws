@@ -18,5 +18,3 @@ services:
       - LOG4J_FORMAT_MSG_NO_LOOKUPS=true
     volumes:
       - ./jchem/licenses/license.cxl:/home/tomcat/.chemaxon/licenses/license.cxl
-      - ./jchem/webapps/webservices:/usr/local/tomcat/webapps/webservices
-      - .:/src
