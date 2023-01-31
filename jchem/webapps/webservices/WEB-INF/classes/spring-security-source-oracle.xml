@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:context="http://www.springframework.org/schema/context"
+    xmlns:p="http://www.springframework.org/schema/p" xmlns:util="http://www.springframework.org/schema/util"
+    xmlns:aop="http://www.springframework.org/schema/aop" xmlns:security="http://www.springframework.org/schema/security"
+    xsi:schemaLocation="
+    http://www.springframework.org/schema/beans
+    http://www.springframework.org/schema/beans/spring-beans.xsd
+    http://www.springframework.org/schema/context
+    http://www.springframework.org/schema/context/spring-context.xsd
+    http://www.springframework.org/schema/util
+    http://www.springframework.org/schema/util/spring-util.xsd
+    http://www.springframework.org/schema/aop
+    http://www.springframework.org/schema/aop/spring-aop.xsd
+    http://www.springframework.org/schema/security
+    http://www.springframework.org/schema/security/spring-security-3.2.xsd">
+
+    <security:authentication-manager alias="authenticationManager">
+        <security:authentication-provider user-service-ref="userService">
+            <security:password-encoder ref="oraclePasswordEncoder">
+                <security:salt-source ref="oraclePasswordEncoder"/>
+            </security:password-encoder>
+        </security:authentication-provider>
+    </security:authentication-manager>
+
+    <bean id="authDataSource" class="com.mchange.v2.c3p0.ComboPooledDataSource" destroy-method="close">
+        <property name="driverClass" value="oracle.jdbc.OracleDriver" />
+        <property name="jdbcUrl" value="jdbc:oracle:thin:@oracle09.bpo.cxn:1521:cxn01" />
+        <property name="user" value="SYSTEM" />
+        <property name="password" value="******" />
+        <property name="testConnectionOnCheckout" value="true" />
+    </bean>
+
+    <bean id="oraclePasswordEncoder" class="chemaxon.jchem.webservice2.security.oracle.OraclePasswordEncoder">
+        <constructor-arg name="dataSource" ref="authDataSource" />
+        <constructor-arg name="saltByUserNameQuery" value="
+            SELECT
+                HEXTORAW(SUBSTR(SPARE4,43)) AS SALT
+            FROM SYS.USER$ WHERE LOWER(NAME) = LOWER(?)" />
+    </bean>
+
+    <security:jdbc-user-service id="userService" data-source-ref="authDataSource" role-prefix=""
+        users-by-username-query="
+            SELECT
+                 LOWER(NAME) AS USERNAME,
+                 SUBSTR(SPARE4,3,40) AS PASSWORD,
+                  CASE WHEN PASSWORD IS NULL THEN 0 ELSE 1 END AS ENABLED
+            FROM SYS.USER$ WHERE LOWER(NAME) = LOWER(?)"
+        authorities-by-username-query="
+            SELECT
+                LOWER(GRANTEE) AS USERNAME,
+                GRANTED_ROLE AS AUTHORITY
+            FROM DBA_ROLE_PRIVS WHERE LOWER(GRANTEE) = LOWER(?)" />
+
+    <bean id="rememberMeUserDetailsService"
+        class="chemaxon.jchem.webservice2.security.DelegatingUserDetailsService">
+        <constructor-arg>
+            <list>
+                <ref bean="userService" />
+            </list>
+        </constructor-arg>
+    </bean>
+
+    <bean id="authenticationMessage" class="java.lang.String">
+        <constructor-arg value="Please use your Oracle database account or contact your administrator!" />
+    </bean>
+
+</beans>

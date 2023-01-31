@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:context="http://www.springframework.org/schema/context"
+    xmlns:p="http://www.springframework.org/schema/p" xmlns:util="http://www.springframework.org/schema/util"
+    xmlns:aop="http://www.springframework.org/schema/aop" xmlns:security="http://www.springframework.org/schema/security"
+    xsi:schemaLocation="
+    http://www.springframework.org/schema/beans
+    http://www.springframework.org/schema/beans/spring-beans.xsd
+    http://www.springframework.org/schema/context
+    http://www.springframework.org/schema/context/spring-context.xsd
+    http://www.springframework.org/schema/util
+    http://www.springframework.org/schema/util/spring-util.xsd
+    http://www.springframework.org/schema/aop
+    http://www.springframework.org/schema/aop/spring-aop.xsd
+    http://www.springframework.org/schema/security
+    http://www.springframework.org/schema/security/spring-security-3.2.xsd">
+
+    <util:properties id="authenticationProperties">
+        <prop key="rememberMeApplicationKey">jchemWebServices</prop>
+        <prop key="rememberMeCookieName">JCHEM_REMEMBER_ME</prop>
+    </util:properties>
+
+    <context:property-placeholder properties-ref="authenticationProperties" ignore-unresolvable="true"/>
+
+    <bean id="nullRequestCache" class="org.springframework.security.web.savedrequest.NullRequestCache" />
+
+    <security:http pattern="/rest-v0/loginbasic/**" request-matcher="ant" use-expressions="true" auto-config="false" entry-point-ref="basicAuthenticationEntryPoint">
+        <!-- Disable request cache for the entry point -->
+        <!-- http://docs.spring.io/autorepo/docs/spring-security/3.2.4.RELEASE/apidocs/org/springframework/security/web/savedrequest/RequestCache.html -->
+        <security:request-cache ref="nullRequestCache"/>
+       <security:intercept-url pattern="/**" access="isAuthenticated()" />
+        <security:remember-me services-ref="rememberMeServices" key="${rememberMeApplicationKey}"/>
+       <security:custom-filter ref="basicAuthenticationFilter" position="BASIC_AUTH_FILTER"/>
+    </security:http>
+
+    <bean id="basicAuthenticationFilter" class="org.springframework.security.web.authentication.www.BasicAuthenticationFilter">
+        <property name="rememberMeServices" ref="rememberMeServices" />
+        <property name="authenticationManager" ref="authenticationManager" />
+        <property name="authenticationEntryPoint" ref="basicAuthenticationEntryPoint" />
+    </bean>
+
+    <bean id="basicAuthenticationEntryPoint"
+       class="org.springframework.security.web.authentication.www.BasicAuthenticationEntryPoint">
+        <property name="realmName" value="#{authenticationMessage}" />
+    </bean>
+
+    <bean id="unauthorizedEntryPoint" class="chemaxon.jchem.webservice2.security.Http401UnauthorizedEntryPoint"/>
+
+    <security:http request-matcher="ant" use-expressions="true" entry-point-ref="unauthorizedEntryPoint" auto-config="false">
+        <!-- Disable request cache for the entry point -->
+        <!-- http://docs.spring.io/autorepo/docs/spring-security/3.2.4.RELEASE/apidocs/org/springframework/security/web/savedrequest/RequestCache.html -->
+        <security:request-cache ref="nullRequestCache"/>
+        <security:intercept-url pattern="/rest-v0/login" access="permitAll"/>
+        <security:intercept-url pattern="/rest-v0/**" access="isAuthenticated()"/>
+        <security:remember-me services-ref="rememberMeServices" key="${rememberMeApplicationKey}"/>
+    </security:http>
+
+    <!-- Remember-me configuration -->
+    <bean id="rememberMeServices" class="org.springframework.security.web.authentication.rememberme.TokenBasedRememberMeServices">
+        <constructor-arg name="key" value="${rememberMeApplicationKey}" />
+        <constructor-arg name="userDetailsService" ref="rememberMeUserDetailsService" />
+        <property name="alwaysRemember" value="true" />
+        <property name="cookieName" value="${rememberMeCookieName}"/>
+    </bean>
+
+</beans>

@@ -1,0 +1,22 @@
+version: '3'
+
+services:
+  # Jchem Webservices (legacy)
+  jchemws:
+    restart: unless-stopped
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: ${JCHEMWS_IMAGE}
+    container_name: jchemws
+    # expose:
+    #   - "8080"
+    ports:
+      - "8083:8080"
+    environment:
+      - JAVA_OPTS=-Xmx1500m -Djava.awt.headless=true
+      - LOG4J_FORMAT_MSG_NO_LOOKUPS=true
+    volumes:
+      - ./jchem/licenses/license.cxl:/home/tomcat/.chemaxon/licenses/license.cxl
+      - ./jchem/webapps/webservices:/usr/local/tomcat/webapps/webservices
+      - .:/src

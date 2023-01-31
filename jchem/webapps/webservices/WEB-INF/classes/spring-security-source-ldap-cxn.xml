@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:context="http://www.springframework.org/schema/context"
+    xmlns:p="http://www.springframework.org/schema/p" xmlns:util="http://www.springframework.org/schema/util"
+    xmlns:aop="http://www.springframework.org/schema/aop" xmlns:security="http://www.springframework.org/schema/security"
+    xsi:schemaLocation="
+    http://www.springframework.org/schema/beans
+    http://www.springframework.org/schema/beans/spring-beans.xsd
+    http://www.springframework.org/schema/context
+    http://www.springframework.org/schema/context/spring-context.xsd
+    http://www.springframework.org/schema/util
+    http://www.springframework.org/schema/util/spring-util.xsd
+    http://www.springframework.org/schema/aop
+    http://www.springframework.org/schema/aop/spring-aop.xsd
+    http://www.springframework.org/schema/security
+    http://www.springframework.org/schema/security/spring-security-3.2.xsd">
+
+    <bean id="contextSource" class="org.springframework.security.ldap.DefaultSpringSecurityContextSource">
+        <constructor-arg value="ldap://ipa31.bph.cxn:389" />
+        <property name="base" value="dc=cxn" />
+        <property name="anonymousReadOnly" value="true" />
+<!--         <property name="userDn" value="uid=admin,ou=system" /> -->
+<!--         <property name="password" value="secret" /> -->
+        <property name="referral" value="follow" />
+    </bean>
+
+    <util:properties id="ldapProperties">
+        <prop key="userSearchBase">cn=users,cn=accounts</prop>
+        <prop key="userSearchFilter">(uid={0})</prop>
+        <!-- any LDAP attribute that will change on password change !!! COULD CAUSE A SECURITY BREACH !!! -->
+        <prop key="passwordAttributeName">krbLastPwdChange</prop>
+
+        <prop key="groupSearchBase">cn=groups,cn=accounts</prop>
+        <prop key="groupSearchFilter">(member={0})</prop>
+        <prop key="groupRoleAttribute">cn</prop>
+    </util:properties>
+
+    <context:property-placeholder properties-ref="ldapProperties"  ignore-unresolvable="true"/>
+
+    <bean id="userSearch" class="org.springframework.security.ldap.search.FilterBasedLdapUserSearch">
+        <constructor-arg name="contextSource" ref="contextSource" />
+        <constructor-arg name="searchBase" value="${userSearchBase}" />
+        <constructor-arg name="searchFilter" value="${userSearchFilter}" />
+    </bean>
+
+    <bean id="authoritiesPopulator" class="org.springframework.security.ldap.userdetails.DefaultLdapAuthoritiesPopulator">
+        <constructor-arg name="contextSource" ref="contextSource"/>
+        <constructor-arg name="groupSearchBase" value="${groupSearchBase}"/>
+        <property name="groupSearchFilter" value="${groupSearchFilter}" />
+        <property name="groupRoleAttribute" value="${groupRoleAttribute}"/>
+    </bean>
+
+    <security:authentication-manager alias="authenticationManager">
+        <security:authentication-provider ref="ldapAuthenticationProvider" />
+    </security:authentication-manager>
+
+    <bean id="ldapAuthenticationProvider" class="org.springframework.security.ldap.authentication.LdapAuthenticationProvider">
+        <constructor-arg name="authenticator">
+            <bean class="org.springframework.security.ldap.authentication.BindAuthenticator">
+                <constructor-arg name="contextSource" ref="contextSource" />
+                <property name="userSearch" ref="userSearch"/>
+            </bean>
+        </constructor-arg>
+        <constructor-arg name="authoritiesPopulator" ref="authoritiesPopulator" />
+    </bean>
+
+    <bean id="ldapUserDetailsService" class="org.springframework.security.ldap.userdetails.LdapUserDetailsService">
+        <constructor-arg name="userSearch" ref="userSearch" />
+        <constructor-arg name="authoritiesPopulator" ref="authoritiesPopulator" />
+        <property name="userDetailsMapper">
+            <bean class="org.springframework.security.ldap.userdetails.LdapUserDetailsMapper">
+                <property name="passwordAttributeName" value="${passwordAttributeName}" />
+            </bean>
+        </property>
+    </bean>
+
+    <bean id="rememberMeUserDetailsService" class="chemaxon.jchem.webservice2.security.DelegatingUserDetailsService">
+        <constructor-arg>
+            <list>
+                <ref bean="ldapUserDetailsService"/>
+            </list>
+        </constructor-arg>
+    </bean>
+
+    <bean id="authenticationMessage" class="java.lang.String">
+      <constructor-arg value="LDAP authentication profile is active. Please contact your administrator for credentials!"/>
+    </bean>
+
+</beans>

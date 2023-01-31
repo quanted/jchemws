@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration debug="false">
+    <statusListener class="ch.qos.logback.core.status.NopStatusListener" />
+
+    <if condition='property("log.dir").equals("")'>
+        <then>
+            <if condition='property("catalina.home").equals("")'>
+                <then><property scope="context" name="log.dir" value="." /></then>
+                <else><property scope="context" name="log.dir" value="${catalina.home}" /></else>
+            </if>
+        </then>
+    </if>
+
+    <property name="defaultPattern" scope="context" value="%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n" />
+    <property name="timeBasedRollingPattern" scope="context" value="%d{yyyy-MM-dd}" />
+
+    <appender name="CXN" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${log.dir}/logs/chemaxon.log</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>${log.dir}/logs/chemaxon_${timeBasedRollingPattern}.log</fileNamePattern>
+            <maxHistory>10</maxHistory>
+        </rollingPolicy>
+        <encoder><pattern>${defaultPattern}</pattern></encoder>
+    </appender>
+
+    <appender name="MEASURE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${log.dir}/logs/chemaxon_measure.log</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>${log.dir}/logs/chemaxon_measure_${timeBasedRollingPattern}.log</fileNamePattern>
+            <maxHistory>30</maxHistory>
+        </rollingPolicy>
+        <encoder><pattern>%d{yyyy-MM-dd HH:mm:ss.SSS}|%thread|%msg%n</pattern></encoder>
+    </appender>
+
+    <appender name="CFGSTORE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${log.dir}/logs/chemaxon_cfgstore.log</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>${log.dir}/logs/chemaxon_cfgstore_${timeBasedRollingPattern}.log</fileNamePattern>
+            <maxHistory>10</maxHistory>
+        </rollingPolicy>
+        <encoder><pattern>${defaultPattern}</pattern></encoder>
+    </appender>
+
+   <appender name="SQL_SIFT" class="ch.qos.logback.classic.sift.SiftingAppender">
+        <discriminator>
+            <key>datasource</key>
+            <defaultValue>unknown</defaultValue>
+        </discriminator>
+        <sift>
+            <appender name="SQL_${datasource}" class="ch.qos.logback.core.rolling.RollingFileAppender">
+                <file>${log.dir}/logs/chemaxon_sql_${datasource}.log</file>
+                <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+                    <fileNamePattern>${log.dir}/logs/chemaxon_sql_${datasource}_${timeBasedRollingPattern}.log</fileNamePattern>
+                    <maxHistory>10</maxHistory>
+                </rollingPolicy>
+                   <encoder><pattern>${defaultPattern}</pattern></encoder>
+            </appender>
+        </sift>
+    </appender>
+
+    <appender name="LOGGERSERVICE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${log.dir}/logs/chemaxon_client.log</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>${log.dir}/logs/chemaxon_client_${timeBasedRollingPattern}.log</fileNamePattern>
+            <maxHistory>30</maxHistory>
+        </rollingPolicy>
+        <encoder><pattern>${defaultPattern}</pattern></encoder>
+    </appender>
+
+    <logger name="chemaxon" level="INFO" />
+    <logger name="chemaxon.sss.search.StructureSearch.general" level="INFO" />
+    <logger name="com.chemaxon" level="INFO" />
+
+    <logger name="chemaxon.jchem.webservice2" level="DEBUG" />
+    <logger name="chemaxon.jchem.ws2base" level="DEBUG" />
+    <logger name="com.chemaxon.connect" level="DEBUG" />
+
+    <logger name="org.jooq" level="ERROR" />
+    <logger name="uk.co.jemos.podam" level="ERROR" />
+    <logger name="ch.qos.logback" level="ERROR" />
+    <logger name="chemaxon.jchem.webservice2.util.ResponseCachingFilter" level="ERROR" />
+
+<!--     log4jdbc configuration -->
+    <logger name="log4jdbc.debug" level="DEBUG" />
+    <logger name="jdbc.sqlonly" level="OFF" />
+    <logger name="jdbc.audit" level="OFF" />
+    <logger name="jdbc.sqltiming" level="OFF" />
+    <logger name="jdbc.resultset" level="OFF" />
+    <logger name="jdbc.connection" level="OFF" />
+
+    <logger name="jdbc.sqlonly" level="INFO" additivity="false">
+        <appender-ref ref="SQL_SIFT" />
+    </logger>
+
+<!--     Separate logger for measure logs -->
+    <logger name="measure" level="DEBUG" additivity="false">
+        <appender-ref ref="MEASURE" />
+    </logger>
+
+<!--     Separate logger for config store (debug) -->
+    <logger name="chemaxon.jchem.webservice2.configstore" level="WARN" additivity="false">
+        <appender-ref ref="CFGSTORE" />
+    </logger>
+
+<!--     Separate logger for logger service -->
+    <logger name="com.chemaxon.log.webservice.LoggerService" level="DEBUG" additivity="false">
+        <appender-ref ref="LOGGERSERVICE" />
+    </logger>
+
+    <root level="WARN">
+        <appender-ref ref="CXN" />
+    </root>
+
+    <contextListener class="ch.qos.logback.classic.jul.LevelChangePropagator">
+        <resetJUL>true</resetJUL>
+    </contextListener>
+</configuration>

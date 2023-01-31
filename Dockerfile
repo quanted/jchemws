@@ -1,0 +1,25 @@
+FROM tomcat:7.0-jre8
+
+# Creates "tomcat" user, makes them owner of tomcat app dir
+RUN useradd --create-home --shell /bin/bash tomcat && \
+	chown -R tomcat:tomcat /usr/local/tomcat
+
+ENV APP_USER tomcat
+# ENV LD_BIND_NOW=1
+
+# RUN addgroup $APP_USER && \
+# 	adduser -S $APP_USER -G $APP_USER
+
+# Makes license folder for chemaxon, gives user read/write privilege
+RUN mkdir -p /home/tomcat/.chemaxon/licenses && \
+	chmod 764 /home/tomcat/.chemaxon/licenses
+
+# Makes "tomcat" user as owner of chemaxon dir
+RUN chown -R tomcat:tomcat /home/tomcat/.chemaxon /usr/local/tomcat
+
+# Sets work directory to "tomcat" folder
+WORKDIR /home/tomcat
+# WORKDIR /opt/tomcat/bin
+
+# Sets default user as "tomcat"
+USER tomcat

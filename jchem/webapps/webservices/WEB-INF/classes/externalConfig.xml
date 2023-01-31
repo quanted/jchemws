@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:context="http://www.springframework.org/schema/context"
+    xmlns:p="http://www.springframework.org/schema/p" xmlns:util="http://www.springframework.org/schema/util"
+    xsi:schemaLocation="
+    http://www.springframework.org/schema/beans
+    http://www.springframework.org/schema/beans/spring-beans.xsd
+    http://www.springframework.org/schema/context
+    http://www.springframework.org/schema/context/spring-context.xsd
+    http://www.springframework.org/schema/util
+    http://www.springframework.org/schema/util/spring-util.xsd">
+
+    <beans profile="ext.config,ext.config.default">
+        <bean id="clog" abstract="true" class="org.springframework.beans.factory.config.MethodInvokingFactoryBean">
+            <property name="targetObject">
+                <bean class="org.slf4j.LoggerFactory" factory-method="getLogger" >
+                    <constructor-arg value="chemaxon.jchem.webservices.config" />
+                </bean>
+            </property>
+        </bean>
+        <bean id="clog.info" parent="clog" abstract="true" p:targetMethod="info"/>
+        <bean id="clog.warn" parent="clog" abstract="true" p:targetMethod="warn"/>
+        <bean id="clog.error" parent="clog" abstract="true" p:targetMethod="error"/>
+    </beans>
+
+    <beans profile="ext.config">
+<!--
+     |** USAGE *************************************************************|
+     |  Provide system properties: -Dspring.profiles.active=ext.config      |
+     |                             -Dext.config.dir=path/to/config/dir      |
+     
+     |  All xml files will be loaded with "Config" postfix                  |
+      **********************************************************************
+-->
+        <bean parent="clog.info" p:arguments="-- [ Loading '*Config.xml' from path:  #{systemProperties['ext.config.dir']} ] --" />
+        <import resource="file:${ext.config.dir}/*Config.xml" />
+    </beans>
+
+    <beans profile="ext.config.default">
+<!--
+     |** USAGE ****************************************************************|
+     |  Provide system property: -Dspring.profiles.active=ext.config.default   |
+     |                                                                         |
+     |  All xml files will be loaded with "Config" postfix from $CHEMAXON_HOME |
+      *************************************************************************
+-->
+        <bean parent="clog.info" p:arguments="-- [ Loading '*Config.xml' from default ChemAxon home dir ] --" />
+        <import resource="file:${user.home}/chemaxon/*Config.xml" />
+        <import resource="file:${user.home}/.chemaxon/*Config.xml" />
+    </beans>
+
+</beans>
