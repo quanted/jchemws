@@ -8,7 +8,7 @@ env:
   JCHEMWS_IMAGE: quanted/jchemws
 
 jobs:
-  build-ctsws:
+  build-jchemws:
     runs-on: ubuntu-latest
     permissions:
       contents: read
