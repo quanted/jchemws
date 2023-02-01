@@ -6,7 +6,7 @@ RUN useradd --create-home --shell /bin/bash tomcat && \
 
 ENV APP_USER tomcat
 
-COPY jchem/webapps /usr/local/tomcat/
+COPY jchem/webapps /usr/local/tomcat/webapps/
 
 # Makes license folder for chemaxon, gives user read/write privilege
 RUN mkdir -p /home/tomcat/.chemaxon/licenses && \

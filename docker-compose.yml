@@ -4,9 +4,6 @@ services:
   # Jchem Webservices (legacy)
   jchemws:
     restart: unless-stopped
-    build:
-      context: .
-      dockerfile: Dockerfile
     image: ${JCHEMWS_IMAGE}
     container_name: jchemws
     # expose:
