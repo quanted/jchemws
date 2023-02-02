@@ -1,5 +1,7 @@
 FROM tomcat:7.0-jre8
 
+RUN rm -rf /usr/local/tomcat/webapps/*
+
 COPY jchem/webapps /usr/local/tomcat/webapps/
 
 # Creates "tomcat" user, makes them owner of tomcat app dir
