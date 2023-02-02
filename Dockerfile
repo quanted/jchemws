@@ -8,7 +8,8 @@ COPY jchem/webapps /usr/local/tomcat/webapps/
 RUN useradd --create-home --shell /bin/bash tomcat && \
 	mkdir -p /home/tomcat/.chemaxon/licenses && \
 	chmod 764 /home/tomcat/.chemaxon/licenses && \
-	chown -R tomcat:tomcat /usr/local/tomcat /home/tomcat/.chemaxon
+	chown -R tomcat:tomcat /usr/local/tomcat /home/tomcat/.chemaxon && \
+	chmod -R 755 /usr/local/tomcat/webapps/webservices/
 
 # Sets work directory to "tomcat" folder
 WORKDIR /home/tomcat
